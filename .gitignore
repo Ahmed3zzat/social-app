@@ -1,0 +1,8 @@
+
+# Google OAuth credentials
+client_secret*.json
+*.apps.googleusercontent.com.json
+
+# Google OAuth credentials
+client_secret*.json
+*.apps.googleusercontent.com.json
