@@ -7,11 +7,15 @@ import { uploadCloud } from "../../utils/file uploading/multerCloud.js";
 import { middleValidation } from "../../middleware/validation.middleware.js";
 import { createPostSchema, freezePostSchema, getSinglePostSchema, likeAndUnLikePostSchema, unFreezePostSchema, updatePostSchema } from "./post.validation.js";
 import { createPost, freezePost, getActivePost, getFreezePost, getSinglePost, likeAndUnLikePost, unFreezePost, updatePost } from "./post.service.js";
+import commentRouter from "../comment/comment.controller.js";
 
-const router = Router({caseSensitive: true, strict: true, mergeParams: true});
+const router = Router(/*{caseSensitive: true, strict: true, mergeParams: true}*/);
 // caseSensitive   endPoint ("/like") != ("/Like")
 // strict   endPoint ("/like/") != ("/like")
 // mergeParams   
+
+router.use("/:postId/comment", commentRouter)
+
 
 
 // create post
@@ -86,9 +90,7 @@ router.get
   asyncHandler(getSinglePost),
 );
 
-
 // Like & unLike
-
 router.patch(
   "/:id/like-unlike",
   asyncHandler(authMiddleware),

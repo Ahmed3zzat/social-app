@@ -1,5 +1,6 @@
 import connectDB from "./DB/connection.js";
 import authRouter from "./modules/auth/auth.controller.js";
+import commentRouter from "./modules/comment/comment.controller.js";
 import postRouter from "./modules/post/post.controller.js";
 import userRouter from "./modules/user/user.controller.js";
 import path from "node:path";
@@ -16,6 +17,7 @@ const boottstrap = async (app, express) => {
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
   app.use("/post", postRouter);
+  app.use("/comment", commentRouter);
 
   // Routes
   app.all("/{*splat}", (req, res, next) => {

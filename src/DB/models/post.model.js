@@ -31,6 +31,12 @@ const postSchema = new Schema(
         ref: "User",
       },
     ],
+    // comments: [
+    //   {
+    //     type: Schema.Types.ObjectId,
+    //     ref: "Comment",
+    //   },
+    // ],
 
     deletedBy: {
       type: Schema.Types.ObjectId,
@@ -51,16 +57,25 @@ const postSchema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   },
 );
 
 // ==================== Post Validation ====================
+
+postSchema.virtual("comments", {
+  ref: "Comment",
+  foreignField: "post",
+  localField: "_id",
+});
 
 postSchema.pre("validate", function () {
   const hasText = Boolean(this.text?.trim());
   const hasImages = this.images?.length > 0;
 
   if (!hasText && !hasImages) {
+    //
     this.invalidate("text", "Post must contain at least text or one image");
   }
 });

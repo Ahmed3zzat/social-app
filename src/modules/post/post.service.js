@@ -202,10 +202,10 @@ export const getSinglePost = async (req, res, next) => {
   const user = req.user;
   const { id } = req.params;
 
-  const post = await Post.find({ _id: id, isDeleted: false }).populate({
+  const post = await Post.find({ _id: id, isDeleted: false }).populate([{
     path: "user",
     select: "profilePicture.secure_url userName",
-  });
+  }, {path: "comments"}]);
 
   if (!post) {
     return next(new Error("Post not found", { cause: 404 }));
@@ -317,3 +317,4 @@ export const likeAndUnLikePost = async (req, res, next) => {
     },
   });
 };
+ 
