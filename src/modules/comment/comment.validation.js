@@ -31,11 +31,26 @@ const updateCommentSchema = Joi.object({
 
 const deleteCommentSchema = Joi.object({
   commentId: Joi.custom(isValidOBJ).required(),
-})
+});
 const getCommentSchema = Joi.object({
   postId: Joi.custom(isValidOBJ).required(),
-})
+});
 
+const likeAndUnLikeCommentSchema = Joi.object({
+  postId: Joi.custom(isValidOBJ).required(),
+});
+const replayCommentSchema = Joi.object({
+  text: Joi.string().trim().min(2).optional(),
+  file: fileSchema.optional(),
+  postId: Joi.custom(isValidOBJ).required(),
+  commentId: Joi.custom(isValidOBJ).required(),
+}).or("text", "file");
 
-
-export { createCommentSchema, updateCommentSchema, deleteCommentSchema, getCommentSchema };
+export {
+  createCommentSchema,
+  updateCommentSchema,
+  deleteCommentSchema,
+  getCommentSchema,
+  likeAndUnLikeCommentSchema,
+  replayCommentSchema,
+};

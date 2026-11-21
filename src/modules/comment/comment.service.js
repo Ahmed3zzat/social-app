@@ -120,7 +120,6 @@ const updateComment = async (req, res, next) => {
   });
 };
 
-
 // ==================== Soft Delete Comment ====================
 const deleteComment = async (req, res, next) => {
   const { user } = req;
@@ -147,11 +146,9 @@ const deleteComment = async (req, res, next) => {
   }
 
   // Check permissions
-  const commentOwner =
-    comment.user.toString() === user._id.toString();
+  const commentOwner = comment.user.toString() === user._id.toString();
 
-  const postOwner =
-    post.user.toString() === user._id.toString();
+  const postOwner = post.user.toString() === user._id.toString();
 
   const admin = user.role === roles.admin;
 
@@ -203,7 +200,120 @@ const getComment = async (req, res, next) => {
   });
 };
 
+// ==================== Like And Unlike Comment ====================
+const likeAndUnLikeComment = async (req, res, next) => {
+  const { user } = req;
+  const { postId } = req.params;
 
+  // Check if comment exists
+  const comment = await Comment.findOne({
+    post: postId,
+    isDeleted: false,
+  });
 
+  if (!comment) {
+    return next(new Error("Comment not found", { cause: 404 }));
+  }
 
-export { createComment, updateComment, deleteComment,getComment };
+  // Check if post exists
+  const postExist = await Post.findOne({
+    _id: comment.post,
+    isDeleted: false,
+  });
+
+  if (!postExist) {
+    return next(new Error("Post not found", { cause: 404 }));
+  }
+
+  // Check if user already liked the comment
+  const userExist = comment.likes.some(
+    (element) => element.toString() === user._id.toString(),
+  );
+
+  if (userExist) {
+    // Unlike Comment
+    comment.likes = comment.likes.filter(
+      (element) => element.toString() !== user._id.toString(),
+    );
+  } else {
+    // Like Comment
+    comment.likes.push(user._id);
+  }
+
+  // Save updated comment
+  await comment.save();
+
+  return res.status(200).json({
+    success: true,
+    message: userExist
+      ? "Comment Unliked successfully"
+      : "Comment Liked successfully",
+    data: {
+      comment,
+    },
+  });
+};
+
+// ==================== Create Comment ====================
+const replayComment = async (req, res, next) => {
+  const { text } = req.body;
+  const { file, user } = req;
+  const { postId, commentId } = req.params;
+
+  const post = await Post.findOne({
+    _id: postId,
+    isDeleted: false,
+  });
+  const comment = await Comment.findOne({
+    _id: commentId,
+    post: postId,
+    isDeleted: false,
+  });
+
+  let image;
+  if (!post) {
+    return next(new Error("Post not found", { cause: 404 }));
+  }
+  if (!comment) {
+    return next(new Error("Comment not found", { cause: 404 }));
+  }
+  if (file) {
+    const { secure_url, public_id } = await cloudinary.uploader.upload(
+      file.path,
+      {
+        folder: `${process.env.CLOUD_FOLDER_NAME}/user/${post.user}/posts/${post.cloudFolder}/comments/${comment._id}`,
+      },
+    );
+    image = { secure_url, public_id };
+  }
+
+  const replay = await Comment.create({
+    image,
+    text,
+    user: user._id,
+    post: postId,
+    parentComment: comment._id,
+  });
+
+  /*
+      const cloudFolder = nanoid();
+     folder: `${process.env.CLOUD_FOLDER_NAME}/user/${_id}/posts/${cloudFolder}`,
+  */
+
+  return res.status(201).json({
+    success: true,
+    message: "Replay Create successfully",
+    data: {
+      replay,
+    },
+  });
+};
+
+export {
+  createComment,
+  updateComment,
+  deleteComment,
+  getComment,
+  likeAndUnLikeComment,
+  replayComment,
+};

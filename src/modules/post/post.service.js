@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import Post from "../../DB/models/post.model.js";
 import User, { roles } from "../../DB/models/user.model.js";
 import cloudinary from "../../utils/file uploading/cloudinary.config.js";
+import { Comment } from "../../DB/models/comment.model.js";
 
 // ==================== Create Post ====================
 export const createPost = async (req, res, next) => {
@@ -199,13 +200,21 @@ export const unFreezePost = async (req, res, next) => {
 
 // ==================== Ge Single Post ====================
 export const getSinglePost = async (req, res, next) => {
-  const user = req.user;
   const { id } = req.params;
-
-  const post = await Post.find({ _id: id, isDeleted: false }).populate([{
-    path: "user",
-    select: "profilePicture.secure_url userName",
-  }, {path: "comments"}]);
+  const post = await Post.find({ _id: id, isDeleted: false }).populate([
+    {
+      path: "user",
+      select: "profilePicture.secure_url userName",
+    },
+    {
+      path: "comments",
+      select: "text image createdAt",
+      populate: {
+        path: "user",
+        select: "profilePicture.secure_url userName",
+      },
+    },
+  ]);
 
   if (!post) {
     return next(new Error("Post not found", { cause: 404 }));
@@ -221,34 +230,54 @@ export const getSinglePost = async (req, res, next) => {
 
 // ==================== Get All Active Post ====================
 export const getActivePost = async (req, res, next) => {
-  const user = req.user;
+  // let posts;
+  // if (user.role == roles.admin) {
+  //   posts = await Post.find({ isDeleted: false }).populate({
+  //     path: "user",
+  //     select: "profilePicture.secure_url userName",
+  //   });
+  // } else if (user.role == roles.user) {
+  //   posts = await Post.find({ isDeleted: false, user: user._id }).populate({
+  //     path: "user",
+  //     select: "profilePicture.secure_url userName",
+  //   });
+  // }
 
-  let posts;
-  if (user.role == roles.admin) {
-    posts = await Post.find({ isDeleted: false }).populate({
-      path: "user",
-      select: "profilePicture.secure_url userName",
-    });
-  } else if (user.role == roles.user) {
-    posts = await Post.find({ isDeleted: false, user: user._id }).populate({
-      path: "user",
-      select: "profilePicture.secure_url userName",
-    });
+  // let resaults = [];
+
+  // const posts = await Post.find({  isDeleted: false }).populate({
+  //   path: "user",
+  //   select: "profilePicture.secure_url userName",
+  // });
+
+  // if (posts.length === 0) {
+  //   return next(new Error("Posts not found", { cause: 404 }));
+  // }
+
+  // for (const post of posts) {
+  //   const comments = await Comment.find({ post: post._id, isDeleted: false });
+  //   resaults.push(comments);
+  // }
+
+  let resaults = [];
+  const cursor = Post.find({ isDeleted: false }).cursor();
+  for (
+    let post = await cursor.next();
+    post != null;
+    post = await cursor.next()
+  ) {
+    const comments = await Comment.find({ post: post._id, isDeleted: false });
+    resaults.push(comments);
   }
-
-  if (posts.length === 0) {
-    return next(new Error("Posts not found", { cause: 404 }));
-  }
-
   return res.status(200).json({
     success: true,
     data: {
-      posts,
+      resaults,
     },
   });
 };
 
-// ==================== Get All Active Post ====================
+// ==================== Get All Freezed Post ====================
 export const getFreezePost = async (req, res, next) => {
   const user = req.user;
 
@@ -285,7 +314,7 @@ export const likeAndUnLikePost = async (req, res, next) => {
   const post = await Post.findOne({
     _id: id,
     isDeleted: false,
-  })
+  });
   if (!post) {
     return next(new Error("Post not found", { cause: 404 }));
   }
@@ -302,7 +331,7 @@ export const likeAndUnLikePost = async (req, res, next) => {
   }
 
   await post.save();
-  const populatedPost =await Post.findOne({
+  const populatedPost = await Post.findOne({
     _id: id,
     isDeleted: false,
   }).populate({
@@ -313,8 +342,7 @@ export const likeAndUnLikePost = async (req, res, next) => {
   return res.status(200).json({
     success: true,
     data: {
-      post:populatedPost,
+      post: populatedPost,
     },
   });
 };
- 

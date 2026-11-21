@@ -24,6 +24,10 @@ const commentSchema = new Schema(
       ref: "Post",
       required: true,
     },
+    parentComment: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+    },
     deletedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
