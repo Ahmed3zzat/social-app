@@ -1,4 +1,6 @@
+import morgan from "morgan";
 import connectDB from "./DB/connection.js";
+import adminRouter from "./modules/admin/admin.controller.js";
 import authRouter from "./modules/auth/auth.controller.js";
 import commentRouter from "./modules/comment/comment.controller.js";
 import postRouter from "./modules/post/post.controller.js";
@@ -6,20 +8,49 @@ import userRouter from "./modules/user/user.controller.js";
 import path from "node:path";
 
 const boottstrap = async (app, express) => {
-  // Connect to the database
+  // ==================== Database Connection ====================
   await connectDB();
 
-  // Middleware
-  app.use(express.json());
+  // ==================== CORS ====================
+  const whitelist = ["http://127.0.0.1:5500", "http://127.0.0.1:5000"];
+  app.use((req, res, next) => {
+    const origin = req.header("origin");
+      // Allow requests without Origin (Postman, server-to-server)
+    if (!whitelist.includes(origin)) {
+      return next(new Error("Blocked By CORS!"));
+    }
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Headers", "*");
+    res.setHeader("Access-Control-Allow-Methods", "*");
+    res.setHeader("Access-Control-Private-Network", true);
 
+    // local >> private network
+    // deploy >> public network
+
+    // Front-end "localhost" >> private network
+    // Back-end deploy >> public network
+    return next();
+  });
+
+  // ==================== Logger ====================
+  app.use(morgan("combined"));
+
+  //   // ==================== Body Parsers ====================
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // ==================== Static Files ====================
   app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
+  // ==================== Routes ====================
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
   app.use("/post", postRouter);
   app.use("/comment", commentRouter);
+  app.use("/admin", adminRouter);
 
-  // Routes
+
+  // ==================== Not Found ====================
   app.all("/{*splat}", (req, res, next) => {
     next(new Error("Route not found", { cause: 404 }));
   });
@@ -35,3 +66,5 @@ const boottstrap = async (app, express) => {
 };
 
 export default boottstrap;
+
+

@@ -8,6 +8,7 @@ import { uploadCloud } from "../../utils/file uploading/multerCloud.js";
 import {
   createComment,
   deleteComment,
+  destroyComment,
   getComment,
   likeAndUnLikeComment,
   replayComment,
@@ -59,7 +60,7 @@ router.patch(
   asyncHandler(authMiddleware),
   isAuthorized(roles.user, roles.admin),
   middleValidation(deleteCommentSchema),
-  asyncHandler(deleteComment),
+  asyncHandler(destroyComment),
 );
 
 // Get Comment
@@ -80,6 +81,15 @@ router.post(
   uploadCloud().single("image"),
   middleValidation(replayCommentSchema),
   asyncHandler(replayComment),
+);
+
+// Hard Delete Comment
+router.delete(
+  "/:commentId",
+  asyncHandler(authMiddleware),
+  isAuthorized(roles.user, roles.admin),
+  middleValidation(deleteCommentSchema),
+  asyncHandler(deleteComment),
 );
 
 export default router;

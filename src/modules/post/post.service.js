@@ -209,10 +209,19 @@ export const getSinglePost = async (req, res, next) => {
     {
       path: "comments",
       select: "text image createdAt",
-      populate: {
-        path: "user",
-        select: "profilePicture.secure_url userName",
-      },
+      match: { parentComment: { $exists: false }, isDeleted: false },
+      populate: [
+        {
+          path: "user",
+          select: "profilePicture.secure_url userName",
+        },
+        {
+          path: "replies",
+          match: {
+            isDeleted: false,
+          },
+        },
+      ],
     },
   ]);
 

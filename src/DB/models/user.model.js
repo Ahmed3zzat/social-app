@@ -2,8 +2,11 @@ import mongoose from "mongoose";
 import { hashFn } from "../../utils/hasing/hash.js";
 
 export const roles = {
-  user: "user",
+  superAdmin: "superAdmin",
   admin: "admin",
+  moderator: "moderator",
+  user: "user",
+  guest: "guest",
 };
 
 export const providers = {
@@ -16,8 +19,6 @@ export const defaultProfilePicture = "uploads//default-profile-picture.png";
 export const defaultPublicId = "default-profile-picture";
 export const defaultSecureUrl =
   "https://res.cloudinary.com/uixfeg7g/image/upload/v1794424470/default-profile-picture.png";
-
-  
 
 const userSchema = new mongoose.Schema(
   {
@@ -52,8 +53,7 @@ const userSchema = new mongoose.Schema(
       public_id: { type: String, default: defaultPublicId },
       secure_url: {
         type: String,
-        default:
-         defaultSecureUrl,
+        default: defaultSecureUrl,
       },
     },
 

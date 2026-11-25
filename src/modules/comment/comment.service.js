@@ -121,7 +121,7 @@ const updateComment = async (req, res, next) => {
 };
 
 // ==================== Soft Delete Comment ====================
-const deleteComment = async (req, res, next) => {
+const destroyComment = async (req, res, next) => {
   const { user } = req;
   const { commentId } = req.params;
 
@@ -171,7 +171,7 @@ const deleteComment = async (req, res, next) => {
   });
 };
 
-// ==================== Soft Delete Comment ====================
+// ==================== Get Comment ====================
 const getComment = async (req, res, next) => {
   const { postId } = req.params;
 
@@ -180,22 +180,31 @@ const getComment = async (req, res, next) => {
     _id: postId,
     isDeleted: false,
   });
+
   if (!post) {
     return next(new Error("Post not found", { cause: 404 }));
   }
-  // Check if comment exists
-  const comment = await Comment.find({
+
+  // Get Parent Comments and their Replies
+  const comments = await Comment.find({
     post: postId,
+    parentComment: null,
     isDeleted: false,
+  }).populate({
+    path: "replies",
+    match: {
+      isDeleted: false,
+    },
   });
-  if (!comment) {
-    return next(new Error("Comment not found", { cause: 404 }));
+
+  if (comments.length === 0) {
+    return next(new Error("Comments not found", { cause: 404 }));
   }
 
   return res.status(200).json({
     success: true,
     data: {
-      comment,
+      comments,
     },
   });
 };
@@ -309,10 +318,60 @@ const replayComment = async (req, res, next) => {
   });
 };
 
+// ==================== Hard Delete Comment ====================
+const deleteComment = async (req, res, next) => {
+  const { user } = req;
+  const { commentId } = req.params;
+
+  // Check if comment exists
+  const comment = await Comment.findOne({
+    _id: commentId,
+    isDeleted: false,
+  });
+
+  if (!comment) {
+    return next(new Error("Comment not found", { cause: 404 }));
+  }
+
+  // Check if post exists
+  const post = await Post.findOne({
+    _id: comment.post,
+    isDeleted: false,
+  });
+
+  if (!post) {
+    return next(new Error("Post not found", { cause: 404 }));
+  }
+
+  // Check permissions
+  const commentOwner = comment.user.toString() === user._id.toString();
+
+  const postOwner = post.user.toString() === user._id.toString();
+
+  const admin = user.role === roles.admin;
+
+  if (!commentOwner && !postOwner && !admin) {
+    return next(new Error("Not Allowed To delete!", { cause: 403 }));
+  }
+
+  // Hard Delete Comment
+  // deleteOne >>> delete all replies
+  await comment.deleteOne();
+
+  return res.status(200).json({
+    success: true,
+    message: "Comment Deleted successfully",
+    data: {
+      comment,
+    },
+  });
+};
+
 export {
   createComment,
   updateComment,
   deleteComment,
+  destroyComment,
   getComment,
   likeAndUnLikeComment,
   replayComment,
