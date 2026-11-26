@@ -6,12 +6,14 @@ import commentRouter from "./modules/comment/comment.controller.js";
 import postRouter from "./modules/post/post.controller.js";
 import userRouter from "./modules/user/user.controller.js";
 import path from "node:path";
+import cors from "cors";
 
 const boottstrap = async (app, express) => {
   // ==================== Database Connection ====================
   await connectDB();
 
   // ==================== CORS ====================
+  /*
   const whitelist = ["http://127.0.0.1:5500", "http://127.0.0.1:5000"];
   app.use((req, res, next) => {
     const origin = req.header("origin");
@@ -31,6 +33,33 @@ const boottstrap = async (app, express) => {
     // Back-end deploy >> public network
     return next();
   });
+*/
+
+  // ==================== CORS ====================
+
+  const whitelist = [
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:5000",
+  ];
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests without Origin (Postman, server-to-server)
+        if (!origin || whitelist.includes(origin)) {
+          return callback(null, true);
+        }
+
+        return callback(new Error("Blocked By CORS!"));
+      },
+
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+      allowedHeaders: ["Content-Type", "Authorization"],
+
+      optionsSuccessStatus: 204,
+    }),
+  );
 
   // ==================== Logger ====================
   app.use(morgan("combined"));
