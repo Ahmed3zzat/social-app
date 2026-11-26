@@ -5,10 +5,14 @@ import "dotenv/config";
 
 
 const app = express();
-const port = process.env.PORT || 3000;
+// const port = process.env.PORT || 3000;
 
 await boottstrap(app, express);
 
-app.listen(port, () => {
-  console.log(chalk.blue.bgRed.bold(`Server running on http://localhost:${port}`));
-});
+// app.listen(port, () => {
+//   console.log(chalk.blue.bgRed.bold(`Server running on http://localhost:${port}`));
+// });
+
+export default app;
+
+
