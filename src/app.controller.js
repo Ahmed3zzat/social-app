@@ -37,30 +37,28 @@ const boottstrap = async (app, express) => {
 
   // ==================== CORS ====================
 
-  const whitelist = [
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:5000",
-    "https://social-platform-tawny-kappa.vercel.app"
-  ];
+  // const whitelist = [
+  //   "http://127.0.0.1:5500",
+  //   "http://127.0.0.1:5000",
+  //   "https://social-platform-tawny-kappa.vercel.app"
+  // ];
 
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests without Origin (Postman, server-to-server)
-        if (!origin || whitelist.includes(origin)) {
-          return callback(null, true);
-        }
+  app.use(cors()); //{
+  //   origin: (origin, callback) => {
+  //     // Allow requests without Origin (Postman, server-to-server)
+  //     if (!origin || whitelist.includes(origin)) {
+  //       return callback(null, true);
+  //     }
 
-        return callback(new Error("Blocked By CORS!"));
-      },
+  //     return callback(new Error("Blocked By CORS!"));
+  //   },
 
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  //   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
-      allowedHeaders: ["Content-Type", "Authorization"],
+  //   allowedHeaders: ["Content-Type", "Authorization"],
 
-      optionsSuccessStatus: 204,
-    }),
-  );
+  //   optionsSuccessStatus: 204,
+  // }),
 
   // ==================== Logger ====================
   app.use(morgan("combined"));
@@ -79,7 +77,6 @@ const boottstrap = async (app, express) => {
   app.use("/comment", commentRouter);
   app.use("/admin", adminRouter);
 
-
   // ==================== Not Found ====================
   app.all("/{*splat}", (req, res, next) => {
     next(new Error("Route not found", { cause: 404 }));
@@ -96,5 +93,3 @@ const boottstrap = async (app, express) => {
 };
 
 export default boottstrap;
-
-
