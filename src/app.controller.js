@@ -40,6 +40,7 @@ const boottstrap = async (app, express) => {
   const whitelist = [
     "http://127.0.0.1:5500",
     "http://127.0.0.1:5000",
+    "https://social-platform-tawny-kappa.vercel.app/"
   ];
 
   app.use(
