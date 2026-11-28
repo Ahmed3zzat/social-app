@@ -225,7 +225,7 @@ export const getSinglePost = async (req, res, next) => {
     },
   ]);
 
-  if (!post) {
+  if (post.length==0) {
     return next(new Error("Post not found", { cause: 404 }));
   }
 
@@ -239,49 +239,43 @@ export const getSinglePost = async (req, res, next) => {
 
 // ==================== Get All Active Post ====================
 export const getActivePost = async (req, res, next) => {
-  // let posts;
-  // if (user.role == roles.admin) {
-  //   posts = await Post.find({ isDeleted: false }).populate({
-  //     path: "user",
-  //     select: "profilePicture.secure_url userName",
-  //   });
-  // } else if (user.role == roles.user) {
-  //   posts = await Post.find({ isDeleted: false, user: user._id }).populate({
-  //     path: "user",
-  //     select: "profilePicture.secure_url userName",
-  //   });
-  // }
+  const { page } = req.query;
 
-  // let resaults = [];
+  // ==================== Get Paginated Posts ====================
+  const { data: posts, pagination } = await Post.find({
+    isDeleted: false,
+  })
+    .populate({
+      path: "user",
+      select: "profilePicture.secure_url userName",
+    })
+    .paginate(page, 2);
 
-  // const posts = await Post.find({  isDeleted: false }).populate({
-  //   path: "user",
-  //   select: "profilePicture.secure_url userName",
-  // });
-
-  // if (posts.length === 0) {
-  //   return next(new Error("Posts not found", { cause: 404 }));
-  // }
-
-  // for (const post of posts) {
-  //   const comments = await Comment.find({ post: post._id, isDeleted: false });
-  //   resaults.push(comments);
-  // }
-
-  let resaults = [];
-  const cursor = Post.find({ isDeleted: false }).cursor();
-  for (
-    let post = await cursor.next();
-    post != null;
-    post = await cursor.next()
-  ) {
-    const comments = await Comment.find({ post: post._id, isDeleted: false });
-    resaults.push(comments);
+  if (posts.length === 0) {
+    return next(new Error("Posts not found", { cause: 404 }));
   }
+
+  // ==================== Get Posts & Comments ====================
+  const results = await Promise.all(
+    posts.map(async (post) => {
+      const comments = await Comment.find({
+        post: post._id,
+        isDeleted: false,
+      });
+
+      return {
+        post,
+        comments,
+      };
+    }),
+  );
+
+  // ==================== Response ====================
   return res.status(200).json({
     success: true,
     data: {
-      resaults,
+      results,
+      pagination,
     },
   });
 };
@@ -289,19 +283,25 @@ export const getActivePost = async (req, res, next) => {
 // ==================== Get All Freezed Post ====================
 export const getFreezePost = async (req, res, next) => {
   const user = req.user;
+  const { page } = req.query;
 
-  let posts;
-  if (user.role == roles.admin) {
-    posts = await Post.find({ isDeleted: true }).populate({
-      path: "user",
-      select: "profilePicture.secure_url userName",
-    });
-  } else if (user.role == roles.user) {
-    posts = await Post.find({ isDeleted: true, user: user._id }).populate({
-      path: "user",
-      select: "profilePicture.secure_url userName",
-    });
+  let filter = { isDeleted: true };
+
+  if (user.role === roles.admin || user.role === roles.superAdmin) {
+    // Admin & SuperAdmin can see all frozen posts
+  } else if (user.role === roles.user) {
+    // User can see only their own frozen posts
+    filter.user = user._id;
+  } else {
+    return next(new Error("Unauthorized", { cause: 403 }));
   }
+
+  const { data: posts, pagination } = await Post.find(filter)
+    .populate({
+      path: "user",
+      select: "profilePicture.secure_url userName",
+    })
+    .paginate(page, 2);
 
   if (posts.length === 0) {
     return next(new Error("Posts not found", { cause: 404 }));
@@ -311,6 +311,7 @@ export const getFreezePost = async (req, res, next) => {
     success: true,
     data: {
       posts,
+      pagination,
     },
   });
 };

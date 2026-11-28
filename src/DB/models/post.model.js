@@ -50,7 +50,7 @@ const postSchema = new Schema(
     cloudFolder: {
       type: String,
       unique: true,
-      require: function () {
+      required: function () {
         return this.images.length ? true : false;
       },
     },
@@ -79,6 +79,39 @@ postSchema.pre("validate", function () {
     this.invalidate("text", "Post must contain at least text or one image");
   }
 });
+
+
+postSchema.query.paginate = async function (page = 1, limit = 2) {
+  page = Number(page) || 1;
+
+  const skip = limit * (page - 1);
+
+  // ==================== Get Data & Total Items ====================
+  const [data, totalItems] = await Promise.all([
+    this.clone()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    this.model.countDocuments(this.getFilter()),
+  ]);
+
+  // ==================== Pagination ====================
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return {
+    data,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      limit,
+      itemPerPage: data.length,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};
 
 const Post = mongoose.model("Post", postSchema);
 

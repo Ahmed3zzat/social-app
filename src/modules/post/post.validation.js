@@ -36,6 +36,18 @@ export const unFreezePostSchema = Joi.object({
   id: Joi.custom(isValidOBJ).required(),
 });
 
+export const paginationSchema = Joi.object({
+  page: Joi.number()
+    .integer()
+    .min(1)
+    .default(1)
+    .messages({
+      "number.base": "Page must be a number",
+      "number.integer": "Page must be an integer",
+      "number.min": "Page must be greater than or equal to 1",
+    }),
+});
+
 export const getSinglePostSchema = Joi.object({
   id: Joi.custom(isValidOBJ).required(),
 });

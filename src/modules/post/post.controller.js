@@ -5,18 +5,34 @@ import authMiddleware from "../../middleware/Authentication.js";
 import { asyncHandler } from "../../middleware/asyncHandler.js";
 import { uploadCloud } from "../../utils/file uploading/multerCloud.js";
 import { middleValidation } from "../../middleware/validation.middleware.js";
-import { createPostSchema, freezePostSchema, getSinglePostSchema, likeAndUnLikePostSchema, unFreezePostSchema, updatePostSchema } from "./post.validation.js";
-import { createPost, freezePost, getActivePost, getFreezePost, getSinglePost, likeAndUnLikePost, unFreezePost, updatePost } from "./post.service.js";
+import {
+  paginationSchema,
+  createPostSchema,
+  freezePostSchema,
+  getSinglePostSchema,
+  likeAndUnLikePostSchema,
+  unFreezePostSchema,
+  updatePostSchema,
+} from "./post.validation.js";
+import {
+  createPost,
+  freezePost,
+  getActivePost,
+  getFreezePost,
+  getSinglePost,
+  likeAndUnLikePost,
+  unFreezePost,
+  updatePost,
+} from "./post.service.js";
 import commentRouter from "../comment/comment.controller.js";
 
-const router = Router(/*{caseSensitive: true, strict: true, mergeParams: true}*/);
+const router =
+  Router(/*{caseSensitive: true, strict: true, mergeParams: true}*/);
 // caseSensitive   endPoint ("/like") != ("/Like")
 // strict   endPoint ("/like/") != ("/like")
-// mergeParams   
+// mergeParams
 
-router.use("/:postId/comment", commentRouter)
-
-
+router.use("/:postId/comment", commentRouter);
 
 // create post
 router.post(
@@ -28,7 +44,6 @@ router.post(
   asyncHandler(createPost),
 );
 
-
 // update post
 router.patch(
   "/:id",
@@ -39,10 +54,8 @@ router.patch(
   asyncHandler(updatePost),
 );
 
-
 // soft delete post
-router.patch
-(
+router.patch(
   "/:id/freeze",
   asyncHandler(authMiddleware),
   isAuthorized(roles.user, roles.admin),
@@ -52,8 +65,7 @@ router.patch
 );
 
 // unfreeze post
-router.patch
-(
+router.patch(
   "/:id/unfreeze",
   asyncHandler(authMiddleware),
   isAuthorized(roles.user, roles.admin),
@@ -63,26 +75,25 @@ router.patch
 );
 
 // Get All Active post
-router.get
-(
+router.get(
   "/active",
   asyncHandler(authMiddleware),
-  isAuthorized(roles.user, roles.admin),
+  isAuthorized(roles.user, roles.admin, roles.superAdmin),
+  middleValidation(paginationSchema),
   asyncHandler(getActivePost),
 );
 
 // Get All Freezed post
-router.get
-(
+router.get(
   "/freeze",
   asyncHandler(authMiddleware),
   isAuthorized(roles.user, roles.admin),
+    middleValidation(paginationSchema),
   asyncHandler(getFreezePost),
 );
 
 // Get Single post
-router.get
-(
+router.get(
   "/:id",
   asyncHandler(authMiddleware),
   isAuthorized(roles.user, roles.admin),
@@ -98,8 +109,5 @@ router.patch(
   middleValidation(likeAndUnLikePostSchema),
   asyncHandler(likeAndUnLikePost),
 );
-
-
-
 
 export default router;
